@@ -2,9 +2,6 @@
   hosts: all_vms
   become: yes
   gather_facts: yes
-  
-  vars:
-    prometheus_ip: "10.0.0.10"   # IP server Prometheus kamu
 
   roles:
     - node_exporter

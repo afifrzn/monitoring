@@ -1,23 +1,22 @@
-- name: Buat user sistem node_exporter (non-login)
+- name: Buat user node_exporter
   user:
     name: node_exporter
     shell: /bin/false
     system: yes
     create_home: no
 
-- name: Download Node Exporter binary
+- name: Download Node Exporter
   get_url:
     url: "https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz"
     dest: /tmp/node_exporter.tar.gz
-    checksum: "sha256:6809dd0b3ec45fd6e992c19071d6b5253aed3ead7bf0686885a51d85c6643c66"
 
-- name: Extract binary
+- name: Extract Node Exporter
   unarchive:
     src: /tmp/node_exporter.tar.gz
     dest: /tmp/
     remote_src: yes
 
-- name: Install binary ke /usr/local/bin
+- name: Install binary
   copy:
     src: /tmp/node_exporter-1.8.2.linux-amd64/node_exporter
     dest: /usr/local/bin/node_exporter
@@ -33,16 +32,9 @@
     mode: '0644'
   notify: restart node_exporter
 
-- name: Enable & start service
+- name: Enable dan start service
   systemd:
     name: node_exporter
     enabled: yes
     state: started
     daemon_reload: yes
-
-- name: Buka port 9100 HANYA untuk IP Prometheus (UFW)
-  ufw:
-    rule: allow
-    port: '9100'
-    proto: tcp
-    src: "{{ prometheus_ip }}"
