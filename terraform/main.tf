@@ -27,6 +27,10 @@ resource "proxmox_virtual_environment_vm" "monitored_vm" {
     full  = true
   }
 
+  agent {
+    enabled = false    # skip tunggu guest agent & IP
+  }
+
   cpu {
     cores = 2
     type  = "x86-64-v2-AES"
@@ -52,6 +56,9 @@ resource "proxmox_virtual_environment_vm" "monitored_vm" {
       keys     = [file("~/.ssh/id_ed25519.pub")]
     }
   }
+
+  timeout_clone  = 300
+  timeout_create = 300
 
   tags = ["monitored", "node-exporter"]
 }
