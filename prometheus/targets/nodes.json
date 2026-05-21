@@ -1,0 +1,12 @@
+[
+  {
+    "targets": [
+      "10.10.101.210:9100",
+      "10.10.101.211:9100"
+    ],
+    "labels": {
+      "job": "node_exporter",
+      "env": "production"
+    }
+  }
+]
