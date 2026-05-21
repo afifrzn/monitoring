@@ -18,7 +18,7 @@ provider "proxmox" {
 }
 
 resource "proxmox_virtual_environment_vm" "monitored_vm" {
-  count     = 10
+  count     = 2
   name      = format("vm-%03d", count.index + 1)
   node_name = "node4"
 
