@@ -1,58 +1,87 @@
 terraform {
   required_providers {
-    # Ganti dengan provider cloud kamu: aws, google, azurerm, openstack, proxmox
     proxmox = {
-      source  = "telmate/proxmox"
-      version = "~> 2.9"
+      source  = "bpg/proxmox"
+      version = "~> 0.66"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.4"
     }
   }
 }
 
 provider "proxmox" {
-  pm_api_url          = "http://10.10.101.204:8006/api2/json"  # ganti IP Proxmox kamu
-  pm_api_token_id     = "root@pam!terraform-token"     # ganti token ID
-  pm_api_token_secret = "42eb4495-904a-4767-acdb-ea29657933b5"  # ganti secret
-  pm_tls_insecure     = true   # set false jika pakai SSL cert valid
+  endpoint  = "https://10.10.101.204:8006"
+  api_token = "root@pam!terraform-token=42eb4495-904a-4767-acdb-ea29657933b5"
+  insecure  = true
 }
 
-resource "proxmox_vm_qemu" "monitored_vm" {
-  count       = 10
-  name        = format("vm-%03d", count.index + 1)    # vm-001, vm-002, ... vm-100
-  target_node = "pve-node-01"
-  clone       = "ubuntu-22.04-template"               # golden image yang sudah disiapkan
-  
-  cores   = 2
-  memory  = 2048
-  
-  network {
-    model  = "virtio"
-    bridge = "vmbr0"
+resource "proxmox_virtual_environment_vm" "monitored_vm" {
+  count     = 10
+  name      = format("vm-%03d", count.index + 1)
+  node_name = "pve"
+
+  clone {
+    vm_id = 9000
+    full  = true
   }
 
-  # Cloud-init: inject SSH key & set hostname otomatis
-  os_type    = "cloud-init"
-  ipconfig0  = "ip=dhcp"
-  sshkeys    = file("~/.ssh/id_ed25519.pub")
-  ciuser     = "ubuntu"
+  cpu {
+    cores = 2
+    type  = "x86-64-v2-AES"
+  }
 
-  tags = "monitored,node-exporter"
+  memory {
+    dedicated = 2048
+  }
+
+  network_device {
+    bridge = "vmbr0"
+    model  = "virtio"
+  }
+
+  initialization {
+    ip_config {
+      ipv4 {
+        address = "dhcp"
+      }
+    }
+    user_account {
+      username = "ubuntu"
+      keys     = [file("~/.ssh/id_ed25519.pub")]
+    }
+  }
+
+  tags = ["monitored", "node-exporter"]
 }
 
-# Output: generate file inventory Ansible otomatis
+output "vm_ips" {
+  value = {
+    for i, vm in proxmox_virtual_environment_vm.monitored_vm :
+    vm.name => vm.ipv4_addresses
+  }
+}
+
 resource "local_file" "ansible_inventory" {
   content = templatefile("${path.module}/inventory.tpl", {
-    vms = proxmox_vm_qemu.monitored_vm[*]
+    vms = proxmox_virtual_environment_vm.monitored_vm[*]
   })
   filename = "../ansible/inventory/hosts.ini"
 }
 
-# Output: generate file targets Prometheus otomatis
 resource "local_file" "prometheus_targets" {
   content = jsonencode([
     {
-      targets = [for vm in proxmox_vm_qemu.monitored_vm : "${vm.default_ipv4_address}:9100"]
-      labels  = { job = "node_exporter", env = "production" }
+      targets = [
+        for vm in proxmox_virtual_environment_vm.monitored_vm :
+        "${one([for iface in vm.ipv4_addresses : one([for ip in iface : ip if ip != "127.0.0.1"])])}:9100"
+      ]
+      labels = {
+        job = "node_exporter"
+        env = "production"
+      }
     }
   ])
-  filename = "../prometheus/targets/nodes.json"
+  filename = "../../prometheus/targets/nodes.json"
 }
