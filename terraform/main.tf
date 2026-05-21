@@ -25,7 +25,7 @@ resource "proxmox_vm_qemu" "monitored_vm" {
   # Cloud-init: inject SSH key & set hostname otomatis
   os_type    = "cloud-init"
   ipconfig0  = "ip=dhcp"
-  sshkeys    = file("~/.ssh/id_rsa.pub")
+  sshkeys    = file("~/.ssh/id_ed25519.pub")
   ciuser     = "ubuntu"
 
   tags = "monitored,node-exporter"
