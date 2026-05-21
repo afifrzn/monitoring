@@ -20,7 +20,7 @@ provider "proxmox" {
 resource "proxmox_virtual_environment_vm" "monitored_vm" {
   count     = 10
   name      = format("vm-%03d", count.index + 1)
-  node_name = "pve"
+  node_name = "node4"
 
   clone {
     vm_id = 9000
