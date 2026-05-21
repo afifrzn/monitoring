@@ -9,7 +9,7 @@ terraform {
 }
 
 resource "proxmox_vm_qemu" "monitored_vm" {
-  count       = 100
+  count       = 10
   name        = format("vm-%03d", count.index + 1)    # vm-001, vm-002, ... vm-100
   target_node = "pve-node-01"
   clone       = "ubuntu-22.04-template"               # golden image yang sudah disiapkan
