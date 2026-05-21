@@ -44,7 +44,8 @@ resource "proxmox_virtual_environment_vm" "monitored_vm" {
   initialization {
     ip_config {
       ipv4 {
-        address = "dhcp"
+        address = "10.10.101.${210 + count.index}/23"
+        gateway = "10.10.100.1"
       }
     }
     user_account {
@@ -59,6 +60,9 @@ resource "proxmox_virtual_environment_vm" "monitored_vm" {
   tags = ["monitored", "node-exporter"]
 }
 
-output "vm_names" {
-  value = [for vm in proxmox_virtual_environment_vm.monitored_vm : vm.name]
+output "vm_ips" {
+  value = {
+    for i, vm in proxmox_virtual_environment_vm.monitored_vm :
+    vm.name => "10.10.101.${210 + i}"
+  }
 }
