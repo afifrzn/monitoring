@@ -4,10 +4,6 @@ terraform {
       source  = "bpg/proxmox"
       version = "~> 0.66"
     }
-    local = {
-      source  = "hashicorp/local"
-      version = "~> 2.4"
-    }
   }
 }
 
@@ -28,7 +24,7 @@ resource "proxmox_virtual_environment_vm" "monitored_vm" {
   }
 
   agent {
-    enabled = false    # skip tunggu guest agent & IP
+    enabled = false
   }
 
   cpu {
@@ -63,32 +59,6 @@ resource "proxmox_virtual_environment_vm" "monitored_vm" {
   tags = ["monitored", "node-exporter"]
 }
 
-output "vm_ips" {
-  value = {
-    for i, vm in proxmox_virtual_environment_vm.monitored_vm :
-    vm.name => vm.ipv4_addresses
-  }
-}
-
-resource "local_file" "ansible_inventory" {
-  content = templatefile("${path.module}/inventory.tpl", {
-    vms = proxmox_virtual_environment_vm.monitored_vm[*]
-  })
-  filename = "../ansible/inventory/hosts.ini"
-}
-
-resource "local_file" "prometheus_targets" {
-  content = jsonencode([
-    {
-      targets = [
-        for vm in proxmox_virtual_environment_vm.monitored_vm :
-        "${one([for iface in vm.ipv4_addresses : one([for ip in iface : ip if ip != "127.0.0.1"])])}:9100"
-      ]
-      labels = {
-        job = "node_exporter"
-        env = "production"
-      }
-    }
-  ])
-  filename = "../../prometheus/targets/nodes.json"
+output "vm_names" {
+  value = [for vm in proxmox_virtual_environment_vm.monitored_vm : vm.name]
 }
