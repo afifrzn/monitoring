@@ -10,7 +10,7 @@ terraform {
 
 provider "proxmox" {
   pm_api_url          = "http://10.10.101.204:8006/api2/json"  # ganti IP Proxmox kamu
-  pm_api_token_id     = "root@pam!terraform"     # ganti token ID
+  pm_api_token_id     = "root@pam!terraform!"     # ganti token ID
   pm_api_token_secret = "ee19335f-4431-400c-b95b-5400fa0a2402"  # ganti secret
   pm_tls_insecure     = true   # set false jika pakai SSL cert valid
 }
