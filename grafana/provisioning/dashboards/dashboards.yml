@@ -1,0 +1,8 @@
+# grafana/provisioning/dashboards/dashboards.yml
+apiVersion: 1
+providers:
+  - name: node-exporter
+    folder: "Infrastructure"
+    type: file
+    options:
+      path: /etc/grafana/provisioning/dashboards

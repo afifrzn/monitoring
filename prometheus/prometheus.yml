@@ -1,0 +1,19 @@
+# prometheus/prometheus.yml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'node_exporter'
+    file_sd_configs:
+      - files:
+          - '/etc/prometheus/targets/nodes.json'   # file ini di-generate Terraform
+        refresh_interval: 30s                       # reload otomatis tiap 30 detik
+    
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__address__]
+        regex: '(.+):\d+'
+        target_label: host_ip
+        replacement: '$1'
